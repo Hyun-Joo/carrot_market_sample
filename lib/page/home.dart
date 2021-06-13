@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  Home({Key? key}) : super(key: key);
 
   @override
   _HomeState createState() => _HomeState();
@@ -10,10 +11,18 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   List<Map<String, String>> data = [];
+  late String currentLocation;
+  final Map<String, String> locationTypeToString = {
+    "gaepo": "개포동",
+    "ora": "오라동",
+    "donam": "도남동"
+  };
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
+    currentLocation = "gaepo";
+
     data = [
       {
         "cid": "1",
@@ -98,6 +107,11 @@ class _HomeState extends State<Home> {
     ];
   }
 
+  final oCcy = new NumberFormat("#,###", "ko_KR");
+  String calcStringToWon(String priceStr){
+    return "${oCcy.format(int.parse(priceStr))}원";
+  }
+
   PreferredSizeWidget _appbarWidget(){
     return AppBar(
       title: GestureDetector(
@@ -107,11 +121,31 @@ class _HomeState extends State<Home> {
           onLongPress: (){
             print("long pressed!");
           },
-          child: Row(
-              children: [
-                Text("개포동"),
-                Icon(Icons.arrow_drop_down)
-              ]
+          child: PopupMenuButton<String>(
+            offset: Offset(0, 35),
+            shape: ShapeBorder.lerp(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+              1),
+            onSelected: (String where){
+              print(where);
+              setState(() {
+                currentLocation = where;
+              });
+            },
+            itemBuilder: (BuildContext context){
+              return [
+                PopupMenuItem(value: "gaepo", child: Text("개포동"),),
+                PopupMenuItem(value: "ora", child: Text("오라동"),),
+                PopupMenuItem(value: "donam", child: Text("도남동"),),
+              ];
+            },
+            child: Row(
+                children: [
+                  Text(locationTypeToString[currentLocation]!),
+                  Icon(Icons.arrow_drop_down)
+                ]
+            ),
           )
       ),
       // 밑 그림자 제거용
@@ -126,50 +160,62 @@ class _HomeState extends State<Home> {
 
   Widget _bodyWidget(){
     return ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        itemBuilder: (BuildContext _context, int index){
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(7)),
-                    child: Image.asset(data[index]["image"]!, width: 100, height: 100,)
-                ),
-                //SizedBox(width: 20),
-                Expanded(
-                  child: Container(
-                    height: 100,
-                    padding: EdgeInsets.only(left: 15),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(data[index]["title"]!),
-                        Text(data[index]["location"]!),
-                        Text(data[index]["price"]!),
-                        Expanded(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      itemBuilder: (BuildContext _context, int index){
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              ClipRRect(
+                  borderRadius: BorderRadius.all(Radius.circular(7)),
+                  child: Image.asset(data[index]["image"]!, width: 100, height: 100,)
+              ),
+              //SizedBox(width: 20),
+              Expanded(
+                child: Container(
+                  height: 100,
+                  padding: EdgeInsets.only(left: 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          data[index]["title"]!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 15)
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                          data[index]["location"]!,
+                          style: TextStyle(fontSize: 12, color: Colors.black.withOpacity(0.3))
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                          calcStringToWon(data[index]["price"]!),
+                          style: TextStyle(fontWeight: FontWeight.w500)
+                      ),
+                      Expanded(
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              SvgPicture.asset("assets/svg/heart_off.svg", width: 13, height: 13,),
-                              SizedBox(width: 5),
-                              Text(data[index]["likes"]!)
-                            ]
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                SvgPicture.asset("assets/svg/heart_off.svg", width: 13, height: 13,),
+                                SizedBox(width: 5),
+                                Text(data[index]["likes"]!)
+                              ]
                           )
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                )
-              ],
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext _context, int index){
-          return Container(height: 1, color: Colors.black.withOpacity(0.4),);
-        },
-        itemCount: 10
+                ),
+              )
+            ],
+          ),
+        );
+      },
+      itemCount: 10,
+      separatorBuilder: (BuildContext _context, int index){
+        return Container(height: 1, color: Colors.black.withOpacity(0.4));
+      },
     );
   }
 
@@ -178,7 +224,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: _appbarWidget(),
       body: _bodyWidget(),
-      //bottomNavigationBar: Container(),
     );
   }
+
 }
